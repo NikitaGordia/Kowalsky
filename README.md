@@ -37,3 +37,36 @@ optimize('RFR',
          y_label='y_label',
          trials=3000)
 ```
+
+## Avaliable models:
+#### Gradient Boosts
+```
+    'XGBR': XGBRegressor
+    'XGBC': XGBClassifier
+    'LGBR': LGBMRegressor
+    'LGBC': LGBMClassifier
+```
+
+#### Trees
+```
+    'RFR': RandomForestRegressor
+    'RFC': RandomForestClassifier
+    'DTR': DecisionTreeRegressor
+    'DTC': DecisionTreeClassifier
+    'ETR': ExtraTreeRegressor
+    'ETC': ExtraTreeClassifier
+```
+
+#### Ensemble
+```
+    'BC': BaggingClassifier
+    'BR': BaggingRegressor
+    'ADAR': AdaBoostRegressor
+    'ADAC': AdaBoostClassifier
+```
+
+#### KNeighbors
+```
+    'KNC': KNeighborsClassifier
+    'KNR': KNeighborsRegressor
+```
