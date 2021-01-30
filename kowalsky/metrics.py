@@ -3,6 +3,7 @@ from sklearn.metrics import mean_squared_error
 
 
 def rmsle(actual, pred):
+    pred[pred < 0] = 0
     return mean_squared_log_error(actual, pred) ** 0.5
 
 

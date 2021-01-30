@@ -1,3 +1,5 @@
 dist
 kowalsky.egg-info
 NikitaGordia.egg-info
+.idea
+tests/feed_baseline.csv
