@@ -63,10 +63,18 @@ optimize('RFR',
     'BR': BaggingRegressor
     'ADAR': AdaBoostRegressor
     'ADAC': AdaBoostClassifier
+    'CBR': CatBoostRegressor
+    'CBC': CatBoostClassifier
 ```
 
 #### KNeighbors
 ```
     'KNC': KNeighborsClassifier
     'KNR': KNeighborsRegressor
+```
+
+#### SVM
+```
+    'SVR': SVR
+    'SVC': SVC
 ```
