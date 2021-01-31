@@ -203,7 +203,6 @@ def optimize_super_learner(models, head_models, path, scorer, y_label, trials=30
         model = create_super_learner(trial, models, head_models)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        print("score")
         return scorers[scorer](y_val, preds)
 
     study = optuna.create_study(direction=direction, sampler=sampler)

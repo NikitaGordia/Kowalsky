@@ -26,6 +26,8 @@ What's inside?
     
 5. opt - handful methods for working with optuna:
     * ```optimize``` - optimize model with given dataframe
+    * ```optimize_super_learner``` - optimize super learner configuration
+   with given set of models and set of heads (meta_model)
    
 ## Example:
 ```
