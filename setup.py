@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="kowalsky",
-    version="0.0.5",
+    version="0.0.6",
     author="Nikita Gordia",
     author_email="nikita.gordia@gmail.com",
     description="A small package for all useful ML things",

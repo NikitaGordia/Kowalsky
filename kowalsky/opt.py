@@ -7,7 +7,7 @@ from xgboost import XGBClassifier
 from optuna.samplers import TPESampler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, make_scorer
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -19,6 +19,11 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import KNeighborsRegressor
+from mlens.ensemble import SuperLearner
+from sklearn.svm import SVR
+from sklearn.svm import SVC
+from catboost import CatBoostClassifier
+from catboost import CatBoostRegressor
 
 from .metrics import rmsle, rmse
 
@@ -94,6 +99,21 @@ def ada_params(trial):
     }
 
 
+def svm_params(trial):
+    return {
+        'kernel': trial.suggest_categorical('kernel', ['linear', 'poly', 'rbf', 'sigmoid']),
+        'tol': trial.suggest_uniform('tol', 1e-5, 1),
+        'C': trial.suggest_loguniform('C', 1e-10, 1e10)
+    }
+
+
+def cb_params(trial):
+    return {
+        'learning_rate': trial.suggest_uniform('learning_rate', 0.0001, 1.0),
+        'depth': trial.suggest_int("max_depth", 2, 16)
+    }
+
+
 models = {
 
     # Gradient Boosts
@@ -115,10 +135,16 @@ models = {
     'BR': lambda trial: BaggingRegressor(**bagg_params(trial)),
     'ADAR': lambda trial: AdaBoostRegressor(**ada_params(trial)),
     'ADAC': lambda trial: AdaBoostClassifier(**ada_params(trial)),
+    'CBR': lambda trial: CatBoostRegressor(**cb_params(trial)),
+    'CBC': lambda trial: CatBoostClassifier(**cb_params(trial)),
 
     # KNeighbors
     'KNC': lambda trial: KNeighborsClassifier(**kn_params(trial)),
-    'KNR': lambda trial: KNeighborsRegressor(**kn_params(trial))
+    'KNR': lambda trial: KNeighborsRegressor(**kn_params(trial)),
+
+    # SVM
+    'SVR': lambda trial: SVR(**svm_params(trial)),
+    'SVC': lambda trial: SVC(**svm_params(trial)),
 }
 
 scorers = {
@@ -138,6 +164,46 @@ def optimize(model_name, path, scorer, y_label, trials=30, sampler=TPESampler(se
         model = models[model_name](trial)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
+        return scorers[scorer](y_val, preds)
+
+    study = optuna.create_study(direction=direction, sampler=sampler)
+    study.optimize(objective, n_trials=trials)
+    return study.best_params
+
+
+def create_super_learner(trial, models, head_models):
+    selected_model_names = []
+    n_models = trial.suggest_int('n_models', 1, min(6, len(models)))
+    names = list(models.keys())
+    for i in range(n_models):
+        model_item = trial.suggest_categorical('model_{}'.format(i), names)
+        if model_item not in selected_model_names:
+            selected_model_names.append(model_item)
+
+    folds = trial.suggest_int('folds', 2, 6)
+    model = SuperLearner(folds=folds)
+
+    selected_models = [models[item] for item in selected_model_names]
+    model.add(selected_models)
+
+    head_names = list(head_models.keys())
+    head = trial.suggest_categorical('head', head_names)
+    model.add_meta(head_models[head])
+    print(f"Try: {selected_model_names}, {head}")
+    return model
+
+
+def optimize_super_learner(models, head_models, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666),
+                           direction='maximize'):
+    ds = pd.read_csv(path)
+    X_ds, y_ds = ds.drop(y_label, axis=1), ds[y_label]
+    X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
+
+    def objective(trial):
+        model = create_super_learner(trial, models, head_models)
+        model.fit(X_train, y_train)
+        preds = model.predict(X_val)
+        print("score")
         return scorers[scorer](y_val, preds)
 
     study = optuna.create_study(direction=direction, sampler=sampler)

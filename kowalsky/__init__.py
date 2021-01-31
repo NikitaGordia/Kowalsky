@@ -6,15 +6,16 @@ from .kag import make_sub
 
 def analysis(model, y_column, path=None, path_test=None, path_out=None,
              ds=None, ds_test=None, export_test_set=False, sample_path=None,
-             rounds=1):
+             rounds=1, eval_model=True):
     if ds is None:
         ds = pd.read_csv(path)
 
     X, y = ds.drop(y_column, axis=1), ds[y_column]
 
-    print(np.array(
-        [cross_val_score(model, X, y, n_jobs=-1).mean() for _ in range(rounds)]
-    ).mean())
+    if eval_model:
+        print(np.array(
+            [cross_val_score(model, X, y, n_jobs=-1).mean() for _ in range(rounds)]
+        ).mean())
 
     if export_test_set and \
             path_out is not None and \
