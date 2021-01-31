@@ -5,7 +5,7 @@ A simple package for handful ML things and more.
 What's inside?
 
 1. ```analysis``` - method for evaluation of specified model with
-   given dataframe. With ```export_test_set=False``` it exports
+   given dataframe. With ```export_test_set=True``` it exports
    ready for submission predictions.
    
 2. df - module for working with dataframe:
