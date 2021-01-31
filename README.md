@@ -8,7 +8,7 @@ What's inside?
    given dataframe. With ```export_test_set=False``` it exports
    ready for submission predictions.
    
-2. df - working with dataframe:
+2. df - module for working with dataframe:
     * ```corr``` - sort all correlated features.
     * ```handle_outliers``` - fill or drop columns with outliers.
     * ```log_transform``` - transform columns with log function.
@@ -17,17 +17,22 @@ What's inside?
     * ```group_by_min``` - make additional columns with aggregated min
     * ```scale``` - scale columns with Standard of MinMax scalers
     
-3. kag:
+3. kaggle:
     * ```submit``` - make submit-file for kaggle based on sample
     
 4. metrics:
     *  ```rmse``` - RMSE scorer
     *  ```rmsle``` - RMSLE scorer
     
-5. opt - handful methods for working with optuna:
+5. optuna - handful methods for working with optuna:
     * ```optimize``` - optimize model with given dataframe
     * ```optimize_super_learner``` - optimize super learner configuration
    with given set of models and set of heads (meta_model)
+      
+6. colab:
+    *  ```csv``` - read csv file located at Google Drive with
+       specified id
+    *  ```path``` - get path to Google Drive file
    
 ## Example:
 ```

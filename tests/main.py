@@ -1,20 +1,20 @@
-from kowalsky.opt import optimize
-from kowalsky.opt import models
-from kowalsky.opt import optimize_super_learner
+from kowalsky.optuna import optimize
+from kowalsky.optuna import models
+from kowalsky.optuna import optimize_super_learner
 from lightgbm import LGBMRegressor
 from xgboost import XGBRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVR
 
-for model in models:
-    if model[-1] == 'C': continue
-    print(model)
-    optimize(model,
-             path='./feed_baseline.csv',
-             y_label='count',
-             direction='minimize',
-             scorer='rmsle',
-             trials=4)
+# for model in models:
+#     if model[-1] == 'C': continue
+#     print(model)
+#     optimize(model,
+#              path='./feed_baseline.csv',
+#              y_label='count',
+#              direction='minimize',
+#              scorer='rmsle',
+#              trials=4)
 
 # optimize_super_learner(models={
 #     'LGBR': LGBMRegressor(
@@ -41,3 +41,7 @@ for model in models:
 # super_model = SuperLearner()
 # super_model.add(model)
 # super_model.fit(X_train, y_train)
+#
+# from kowalsky.colab import csv
+#
+# print(csv("1DRt7_skit13bYJV1jS9oN7Ag8v6M-l0Y"))

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import cross_val_score
-from .kag import make_sub
+from .kaggle import make_sub
 
 
 def analysis(model, y_column, path=None, path_test=None, path_out=None,
