@@ -1,11 +1,12 @@
 import setuptools
+import os
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="kowalsky",
-    version="0.0.7",
+    version="0.0.14",
     author="Nikita Gordia",
     author_email="nikita.gordia@gmail.com",
     description="A small package for all useful ML things",
@@ -18,5 +19,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=open(os.path.join(os.curdir, 'requirements.txt')).read().strip().split('\n'),
     python_requires='>=3.6',
 )

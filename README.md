@@ -37,7 +37,7 @@ What's inside?
 ## Example:
 ```
 !pip install kowalsky --upgrade
-from kowalsky.opt import optimize
+from kowalsky.optuna import optimize
 optimize('RFR',
          path='../input/project/feed.csv',
          scorer='acc',
