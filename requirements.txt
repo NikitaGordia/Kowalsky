@@ -40,3 +40,4 @@ threadpoolctl
 tqdm
 wcwidth
 xgboost
+missingno

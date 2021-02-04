@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import missingno as msno
 
 
 def corr(ds):
@@ -25,10 +26,20 @@ def handle_outliers(df_raw, columns, drop=False, upper_quantile=.95, lower_quant
     return df
 
 
-def log_transform(df_raw, columns, fn=np.log):
+def transform(df_raw, columns, fn=np.log1p):
     df = df_raw.copy()
     for column in columns:
-        df[column] = df[column].transform(fn)
+        if column in df:
+            df[column] = df[column].transform(fn)
+
+    return df
+
+
+def drop(df_raw, columns):
+    df = df_raw.copy()
+    for column in columns:
+        if column in df:
+            df.drop(column, axis=1, inplace=True)
 
     return df
 
@@ -69,3 +80,9 @@ def scale(df_raw, columns, minMax=False):
         if col in df_raw:
             df[col] = scaler.fit_transform(np.array(df[col]).reshape(-1, 1)).reshape(-1)
     return df
+
+
+def describe_missing_values(df):
+    msno.bar(df)
+    msno.matrix(df)
+    msno.heatmap(df)
