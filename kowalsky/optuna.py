@@ -7,7 +7,6 @@ from xgboost import XGBClassifier
 from optuna.samplers import TPESampler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import accuracy_score, f1_score, make_scorer
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -24,8 +23,7 @@ from sklearn.svm import SVR
 from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from catboost import CatBoostRegressor
-
-from .metrics import rmsle, rmse
+from .metrics import get_score_fn
 
 
 def rf_params(trial):
@@ -147,13 +145,6 @@ models = {
     'SVC': lambda trial: SVC(**svm_params(trial)),
 }
 
-scorers = {
-    'acc': accuracy_score,
-    'f1': f1_score,
-    'rmse': rmse,
-    'rmsle': rmsle
-}
-
 
 def optimize(model_name, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666), direction='maximize'):
     ds = pd.read_csv(path)
@@ -164,7 +155,7 @@ def optimize(model_name, path, scorer, y_label, trials=30, sampler=TPESampler(se
         model = models[model_name](trial)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        return scorers[scorer](y_val, preds)
+        return get_score_fn(scorer)(y_val, preds)
 
     study = optuna.create_study(direction=direction, sampler=sampler)
     study.optimize(objective, n_trials=trials)
@@ -203,7 +194,7 @@ def optimize_super_learner(models, head_models, path, scorer, y_label, trials=30
         model = create_super_learner(trial, models, head_models)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        return scorers[scorer](y_val, preds)
+        return get_score_fn(scorer)(y_val, preds)
 
     study = optuna.create_study(direction=direction, sampler=sampler)
     study.optimize(objective, n_trials=trials)

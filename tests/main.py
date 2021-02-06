@@ -5,6 +5,7 @@ from lightgbm import LGBMRegressor
 from xgboost import XGBRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVR
+import pandas as pd
 
 # for model in models:
 #     if model[-1] == 'C': continue
@@ -45,5 +46,13 @@ from sklearn.svm import SVR
 # from kowalsky.colab import csv
 #
 # print(csv("1DRt7_skit13bYJV1jS9oN7Ag8v6M-l0Y"))
+
+import kowalsky
+from sklearn.tree import DecisionTreeRegressor
+kowalsky.analysis(DecisionTreeRegressor(),
+                  path='./feed_baseline.csv',
+                  y_column='count',
+                  scorer='rmsle',
+                  greater_is_better=False)
 
 
