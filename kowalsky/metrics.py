@@ -1,6 +1,6 @@
 from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import accuracy_score, f1_score, make_scorer
+from sklearn.metrics import accuracy_score, f1_score
 
 
 def rmsle(actual, pred):
@@ -18,10 +18,6 @@ scorers = {
     'rmse': rmse,
     'rmsle': rmsle
 }
-
-
-def get_scorer(name, greater_is_better=True):
-    return make_scorer(scorers[name], greater_is_better=greater_is_better)
 
 
 def get_score_fn(name):

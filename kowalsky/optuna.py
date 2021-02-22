@@ -24,14 +24,16 @@ from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from catboost import CatBoostRegressor
 from .metrics import get_score_fn
+from .logs import LivePyPlot
+import math
 
 
 def rf_params(trial):
     return {
         'min_samples_leaf': trial.suggest_int("min_samples_leaf", 1, 15),
         'min_samples_split': trial.suggest_uniform("min_samples_split", 0.05, 1.0),
-        'n_estimators': trial.suggest_int("n_estimators", 2, 300),
-        'max_depth': trial.suggest_int("max_depth", 2, 15),
+        'n_estimators': trial.suggest_int("n_estimators", 2, 800),
+        'max_depth': trial.suggest_int("max_depth", 2, 25),
         'random_state': 666
     }
 
@@ -40,7 +42,7 @@ def xgboost_params(trial):
     return {
         'learning_rate': trial.suggest_uniform("learning_rate", 0.0000001, 2),
         'n_estimators': trial.suggest_int("n_estimators", 2, 800),
-        'max_depth': trial.suggest_int("max_depth", 2, 20),
+        'max_depth': trial.suggest_int("max_depth", 2, 25),
         'gamma': trial.suggest_uniform('gamma', 0.0000001, 1),
         'random_state': 666
     }
@@ -59,7 +61,7 @@ def lgb_params(trial):
 
 def dt_params(trial):
     return {
-        'max_depth': trial.suggest_int("max_depth", 2, 15),
+        'max_depth': trial.suggest_int("max_depth", 2, 25),
         'min_samples_split': trial.suggest_int('min_samples_split', 2, 20),
         'min_weight_fraction_leaf': trial.suggest_uniform('min_weight_fraction_leaf', 0.0, 0.5),
         'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 15),
@@ -79,7 +81,7 @@ def et_params(trial):
 def bagg_params(trial):
     return {
         'n_estimators': trial.suggest_int('n_estimators', 2, 300),
-        'max_samples': trial.suggest_int('max_samples', 1, 200),
+        'max_samples': trial.suggest_int('max_samples', 1, 400),
         'random_state': 666
     }
 
@@ -99,7 +101,7 @@ def ada_params(trial):
 
 def svm_params(trial):
     return {
-        'kernel': trial.suggest_categorical('kernel', ['linear', 'poly', 'rbf', 'sigmoid']),
+        'kernel': trial.suggest_categorical('kernel', ['linear', 'poly']),
         'tol': trial.suggest_uniform('tol', 1e-5, 1),
         'C': trial.suggest_loguniform('C', 1e-10, 1e10)
     }
@@ -146,19 +148,58 @@ models = {
 }
 
 
-def optimize(model_name, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666), direction='maximize'):
+class EarlyStoppingError(Exception):
+    pass
+
+
+class EarlyStopping:
+
+    def __init__(self, direction, patience=100, threshold=1e-3):
+        self.best = -math.inf if direction == 'maximize' else math.inf
+        self.fn = max if direction == 'maximize' else min
+        self.count = 0
+        self.threshold = threshold
+        self.patience = patience
+
+    def __call__(self, value):
+        new_value = self.fn(self.best, value)
+        if abs(new_value - self.best) < self.threshold:
+            self.count += 1
+            if self.count > self.patience:
+                raise EarlyStoppingError()
+        else:
+            self.count = 0
+            self.best = new_value
+
+
+def optimize(model_name, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666),
+             direction='maximize', patience=100, threshold=1e-3):
     ds = pd.read_csv(path)
     X_ds, y_ds = ds.drop(y_label, axis=1), ds[y_label]
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
+
+    live = LivePyPlot(direction)
+    stopping = EarlyStopping(direction, patience, threshold)
 
     def objective(trial):
         model = models[model_name](trial)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        return get_score_fn(scorer)(y_val, preds)
+        error = get_score_fn(scorer)(y_val, preds)
+        live(error)
+        stopping(error)
+        return error
 
     study = optuna.create_study(direction=direction, sampler=sampler)
-    study.optimize(objective, n_trials=trials)
+
+    try:
+        study.optimize(objective, n_trials=trials, n_jobs=-1)
+    except KeyboardInterrupt:
+        print("Stopped with keyboard")
+    except EarlyStoppingError:
+        print("Stopped with early stopping")
+    live.clear()
+
     return study.best_params
 
 
@@ -185,17 +226,32 @@ def create_super_learner(trial, models, head_models):
 
 
 def optimize_super_learner(models, head_models, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666),
-                           direction='maximize'):
+                           direction='maximize', patience=100, threshold=1e-3):
     ds = pd.read_csv(path)
     X_ds, y_ds = ds.drop(y_label, axis=1), ds[y_label]
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
+    scorer_fn = get_score_fn(scorer)
+
+    live = LivePyPlot(direction)
+    stopping = EarlyStopping(direction, patience, threshold)
 
     def objective(trial):
         model = create_super_learner(trial, models, head_models)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        return get_score_fn(scorer)(y_val, preds)
+        error = scorer_fn(y_val, preds)
+        live(error)
+        stopping(error)
+        return error
 
     study = optuna.create_study(direction=direction, sampler=sampler)
-    study.optimize(objective, n_trials=trials)
+
+    try:
+        study.optimize(objective, n_trials=trials, n_jobs=-1)
+    except KeyboardInterrupt:
+        print("Stopped with keyboard")
+    except EarlyStoppingError:
+        print("Stopped with early stopping")
+    live.clear()
+
     return study.best_params

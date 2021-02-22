@@ -2,7 +2,14 @@
 
 A simple package for handful ML things and more.
 
-What's inside?
+## What's new? [v0.0.22]
+* add apply_with_progress for ability to track the progress of dataframe transformation
+* improve optimize:
+   * EarlyStopping mechanism
+   * optimization graph
+   * multitasks with n_jobs=-1
+
+## What's inside?
 
 1. ```analysis``` - method for evaluation of specified model with
    given dataframe. With ```export_test_set=True``` it exports
@@ -15,6 +22,7 @@ What's inside?
     * ```group_by_mean``` - make additional columns with aggregated mean
     * ```group_by_max``` - make additional columns with aggregated max
     * ```group_by_min``` - make additional columns with aggregated min
+    * ```apply_with_progress``` - apply heavy function for each row of dataset.
     * ```scale``` - scale columns with Standard of MinMax scalers
     
 3. kaggle:
