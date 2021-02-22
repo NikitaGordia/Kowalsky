@@ -3,11 +3,11 @@
 A simple package for handful ML things and more.
 
 ## What's new? [v0.0.22]
-* add apply_with_progress for ability to track the progress of dataframe transformation
+* add ```apply_with_progress``` for ability to track the progress of dataframe transformation
 * improve optimize:
-   * EarlyStopping mechanism
+   * ```EarlyStopping``` mechanism
    * optimization graph
-   * multitasks with n_jobs=-1
+   * multitasks with ```n_jobs=-1```
 
 ## What's inside?
 
