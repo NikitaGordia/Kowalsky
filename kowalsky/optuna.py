@@ -24,7 +24,7 @@ from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from catboost import CatBoostRegressor
 from .metrics import get_score_fn
-from .logs import LivePyPlot
+from kowalsky.logs.utils import LivePyPlot
 import math
 
 

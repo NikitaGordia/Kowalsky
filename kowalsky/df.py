@@ -5,7 +5,7 @@ import missingno as msno
 from datetime import timedelta
 from datetime import datetime
 import time
-from .logs import calc_percent
+from kowalsky.logs.utils import calc_percent
 
 
 class ProgressTracker:

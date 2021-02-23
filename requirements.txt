@@ -41,3 +41,4 @@ tqdm
 wcwidth
 xgboost
 missingno
+mlxtend

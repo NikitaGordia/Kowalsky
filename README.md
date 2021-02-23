@@ -2,7 +2,10 @@
 
 A simple package for handful ML things and more.
 
-## What's new? [v0.0.22]
+## What's new? [v0.0.23]
+* add ```feature``` package with two types of analysis
+   * Recursive Feature Elimination
+   * Sequential Feature Selection
 * add ```apply_with_progress``` for ability to track the progress of dataframe transformation
 * improve optimize:
    * ```EarlyStopping``` mechanism
@@ -41,6 +44,10 @@ A simple package for handful ML things and more.
     *  ```csv``` - read csv file located at Google Drive with
        specified id
     *  ```path``` - get path to Google Drive file
+
+7. feature:
+   *  ```rfe_analysis``` - Recursive Feature Elimination analysis
+   *  ```sfs_analysis``` - Sequential Feature Selection analysis
    
 ## Example:
 ```
