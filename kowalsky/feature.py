@@ -6,6 +6,7 @@ from kowalsky.logs.utils import LivePyPlot
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 import matplotlib.pyplot as plt
+import numpy as np
 import math
 
 
@@ -26,6 +27,8 @@ def rfe_analysis(model, path, y_label, scoring, direction, cv=3, ranking=None,
             print("Stopped with keyboard")
             return
         ranking = rfe.ranking_
+    else:
+        ranking = np.array(ranking)
 
     print(pd.DataFrame({
         'column': X.columns,
@@ -38,7 +41,7 @@ def rfe_analysis(model, path, y_label, scoring, direction, cv=3, ranking=None,
     best_columns = None
 
     try:
-        for rank in range(1, ranking.max() + 1):
+        for rank in range(1, np.max(ranking) + 1):
             rank_columns = X.columns[ranking <= rank]
             score = abs(cross_val_score(model, X[rank_columns], y, scoring=scoring, cv=cv, n_jobs=-1, verbose=10).mean())
             live(score, sum(ranking <= rank))
