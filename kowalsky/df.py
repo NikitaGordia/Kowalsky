@@ -142,3 +142,11 @@ def describe_missing_values(df):
     msno.bar(df)
     msno.matrix(df)
     msno.heatmap(df)
+
+
+def read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols):
+    if ds is None:
+        ds = pd.read_csv(path)
+
+    X, y = ds.drop(y_column, axis=1), ds[y_column]
+    return X[X.columns[feature_selection_support] if feature_selection_support is not None else feature_selection_cols], y

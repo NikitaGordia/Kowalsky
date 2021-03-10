@@ -3,16 +3,16 @@ import numpy as np
 from sklearn.model_selection import cross_val_score
 from .kaggle import make_sub
 from joblib import dump
+from .df import read_dataset
 
 
 def analysis(model, y_column, path=None, path_test=None, path_out=None,
              ds=None, ds_test=None, export_test_set=False, sample_path=None,
              rounds=1, eval_model=True, target_transform_fn=None, scorer=None,
-             export_model_path=None, export_model=False, verbose=False):
-    if ds is None:
-        ds = pd.read_csv(path)
+             export_model_path=None, export_model=False, verbose=False,
+             feature_selection_support=None, feature_selection_cols=None):
 
-    X, y = ds.drop(y_column, axis=1), ds[y_column]
+    X, y = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
 
     if eval_model:
         if verbose: print("Evaluation...")

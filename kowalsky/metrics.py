@@ -13,7 +13,7 @@ def rmse(actual, pred):
 
 
 scorers = {
-    'acc': accuracy_score,
+    'accuracy': accuracy_score,
     'f1': f1_score,
     'rmse': rmse,
     'rmsle': rmsle

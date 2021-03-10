@@ -26,6 +26,7 @@ from catboost import CatBoostRegressor
 from .metrics import get_score_fn
 from kowalsky.logs.utils import LivePyPlot
 import math
+from .df import read_dataset
 
 
 def rf_params(trial):
@@ -172,10 +173,10 @@ class EarlyStopping:
             self.best = new_value
 
 
-def optimize(model_name, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666),
-             direction='maximize', patience=100, threshold=1e-3):
-    ds = pd.read_csv(path)
-    X_ds, y_ds = ds.drop(y_label, axis=1), ds[y_label]
+def optimize(model_name, path, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
+             direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
+             feature_selection_cols=None, ds=None):
+    X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
 
     live = LivePyPlot(direction)
@@ -225,10 +226,11 @@ def create_super_learner(trial, models, head_models):
     return model
 
 
-def optimize_super_learner(models, head_models, path, scorer, y_label, trials=30, sampler=TPESampler(seed=666),
-                           direction='maximize', patience=100, threshold=1e-3):
-    ds = pd.read_csv(path)
-    X_ds, y_ds = ds.drop(y_label, axis=1), ds[y_label]
+def optimize_super_learner(models, head_models, path, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
+                           direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
+                           feature_selection_cols=None, ds=None):
+
+    X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
     scorer_fn = get_score_fn(scorer)
 

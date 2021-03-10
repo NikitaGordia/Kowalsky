@@ -2,8 +2,8 @@
 
 A simple package for handful ML things and more.
 
-## What's new? [v0.0.23]
-* add ```feature``` package with two types of analysis
+## What's new? [v0.0.29]
+* add ```feature``` package with two types of analysis + support для остальных функций
    * Recursive Feature Elimination
    * Sequential Feature Selection
 * add ```apply_with_progress``` for ability to track the progress of dataframe transformation
