@@ -1,5 +1,4 @@
 import optuna
-import pandas as pd
 from lightgbm import LGBMRegressor
 from lightgbm import LGBMClassifier
 from xgboost import XGBRegressor
@@ -173,9 +172,13 @@ class EarlyStopping:
             self.best = new_value
 
 
-def optimize(model_name, path, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
+def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
              direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
-             feature_selection_cols=None, ds=None):
+             feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=False):
+
+    if sample_size is not None:
+        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_label] if stratify else None)
+
     X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
 
@@ -204,6 +207,7 @@ def optimize(model_name, path, scorer, y_column, trials=30, sampler=TPESampler(s
     return study.best_params
 
 
+
 def create_super_learner(trial, models, head_models):
     selected_model_names = []
     n_models = trial.suggest_int('n_models', 1, min(6, len(models)))
@@ -226,9 +230,9 @@ def create_super_learner(trial, models, head_models):
     return model
 
 
-def optimize_super_learner(models, head_models, path, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
+def optimize_super_learner(models, head_models, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
                            direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
-                           feature_selection_cols=None, ds=None):
+                           feature_selection_cols=None, ds=None, path=None):
 
     X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)

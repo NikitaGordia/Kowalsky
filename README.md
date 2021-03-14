@@ -2,15 +2,15 @@
 
 A simple package for handful ML things and more.
 
-## What's new? [v0.0.29]
+## What's new? [v0.0.30]
 * add ```feature``` package with two types of analysis + support для остальных функций
    * Recursive Feature Elimination
    * Sequential Feature Selection
-* add ```apply_with_progress``` for ability to track the progress of dataframe transformation
 * improve optimize:
    * ```EarlyStopping``` mechanism
    * optimization graph
    * multitasks with ```n_jobs=-1```
+* add ```logs``` package    
 
 ## What's inside?
 
@@ -46,8 +46,12 @@ A simple package for handful ML things and more.
     *  ```path``` - get path to Google Drive file
 
 7. feature:
-   *  ```rfe_analysis``` - Recursive Feature Elimination analysis
-   *  ```sfs_analysis``` - Sequential Feature Selection analysis
+    *  ```rfe_analysis``` - Recursive Feature Elimination analysis
+    *  ```sfs_analysis``` - Sequential Feature Selection analysis
+    
+8. logs:
+    *  ```profile_memory``` - logs all heavy variables
+    *  ```make_pretty_pyplot``` - makes pyplot look better :)
    
 ## Example:
 ```

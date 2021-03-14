@@ -2,54 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import missingno as msno
-from datetime import timedelta
-from datetime import datetime
-import time
 from kowalsky.logs.utils import calc_percent
-
-
-class ProgressTracker:
-
-    def __init__(self, n):
-        self.progress = 0
-        self.n = n
-
-        self.notify_n = n // 100
-
-        self.last_time = None
-        self.times = []
-
-    def __call__(self):
-        self.progress += 1
-        if self.progress % self.notify_n == 0:
-            if self.last_time is None:
-                self.last_time = time.time()
-            else:
-                now = time.time()
-                self.times.append(now - self.last_time)
-                self.last_time = now
-
-            if len(self.times) > 0:
-                average_execution = timedelta(milliseconds=sum(self.times) / len(self.times) * 1000)
-                notify_remain = (self.n - self.progress) / self.notify_n
-                remain = average_execution * notify_remain
-                estimated_finish = datetime.now() + remain
-                print(
-                    f"Completed: {calc_percent(self.progress, self.n)} [{datetime.now().strftime('%H:%M:%S')}, {remain}, {estimated_finish.strftime('%H:%M:%S')}]")
-            else:
-                print(
-                    f"Completed: {calc_percent(self.progress, self.n)} [timestamp: {datetime.now().strftime('%H:%M:%S')}, remain, estimated_finish]")
-
-
-def apply_with_progress(df, fn):
-    tracker = ProgressTracker(df.shape[0])
-
-    def track_fn(row):
-        value = fn(row)
-        tracker()
-        return value
-
-    return df.apply(track_fn, axis=1)
 
 
 def corr(ds, y_col):
@@ -149,4 +102,8 @@ def read_dataset(ds, path, y_column, feature_selection_support, feature_selectio
         ds = pd.read_csv(path)
 
     X, y = ds.drop(y_column, axis=1), ds[y_column]
+
+    if feature_selection_support is None and feature_selection_cols is None:
+        feature_selection_cols = X.columns
+
     return X[X.columns[feature_selection_support] if feature_selection_support is not None else feature_selection_cols], y

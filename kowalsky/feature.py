@@ -10,14 +10,15 @@ import numpy as np
 import math
 
 
-def rfe_analysis(model, path, y_label, scoring, direction, cv=3, ranking=None,
+def rfe_analysis(model, y_column, scoring, direction, cv=3, ranking=None, path=None, ds=None,
                  sample_size=None, n_features_to_select=5, precision=1e-3, stratify=False):
-    ds = pd.read_csv(path)
+    if ds is None:
+        ds = pd.read_csv(path)
 
     if sample_size is not None:
-        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_label] if stratify else None)
+        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_column] if stratify else None)
 
-    X, y = ds.drop(y_label, axis=1), ds[y_label]
+    X, y = ds.drop(y_column, axis=1), ds[y_column]
 
     if ranking is None:
         rfe = RFE(model, step=1, verbose=10, n_features_to_select=n_features_to_select)
@@ -58,9 +59,11 @@ def rfe_analysis(model, path, y_label, scoring, direction, cv=3, ranking=None,
     return best_columns
 
 
-def sfs_analysis(model, path, y_label, scoring, k_features, cv=3, forward=True, floating=False,
-                 sample_size=None, stratify=False):
-    ds = pd.read_csv(path)
+def sfs_analysis(model, y_label, scoring, k_features, cv=3, forward=True, floating=False, path=None,
+                 sample_size=None, stratify=False, ds=None):
+
+    if ds is None:
+        ds = pd.read_csv(path)
 
     if sample_size is not None:
         ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_label] if stratify else None)

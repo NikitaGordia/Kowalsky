@@ -42,3 +42,4 @@ wcwidth
 xgboost
 missingno
 mlxtend
+IPython
