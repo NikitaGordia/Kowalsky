@@ -28,141 +28,104 @@ import math
 from .df import read_dataset
 
 
-def rf_params(trial):
-    return {
-        'min_samples_leaf': trial.suggest_int("min_samples_leaf", 1, 15),
-        'min_samples_split': trial.suggest_uniform("min_samples_split", 0.05, 1.0),
-        'n_estimators': trial.suggest_int("n_estimators", 2, 800),
-        'max_depth': trial.suggest_int("max_depth", 2, 25),
+family_params = {
+    'lgb': {
+        'learning_rate': ('uniform', 0.0000001, 1),
+        'n_estimators': ('int', 1, 800),
+        'max_depth': ('int', 2, 25),
+        'num_leaves': ('int', 2, 3000),
+        'min_child_samples': ('int', 3, 200)
+    },
+    'dt': {
+        'max_depth': ('int', 2, 25),
+        'min_samples_split': ('int', 2, 20),
+        'min_weight_fraction_leaf': ('uniform', 0.0, 0.5),
+        'min_samples_leaf': ('int', 1, 15)
+    },
+    'xgb': {
+        'learning_rate': ('uniform', 0.0000001, 2),
+        'n_estimators': ('int', 2, 800),
+        'max_depth': ('int', 2, 25),
+        'gamma': ('uniform', 0.0000001, 1),
         'random_state': 666
-    }
-
-
-def xgboost_params(trial):
-    return {
-        'learning_rate': trial.suggest_uniform("learning_rate", 0.0000001, 2),
-        'n_estimators': trial.suggest_int("n_estimators", 2, 800),
-        'max_depth': trial.suggest_int("max_depth", 2, 25),
-        'gamma': trial.suggest_uniform('gamma', 0.0000001, 1),
+    },
+    'rf': {
+        'min_samples_leaf': ('int', 1, 15),
+        'min_samples_split': ('uniform', 0.05, 1.0),
+        'n_estimators': ('int', 2, 800),
+        'max_depth': ('int', 2, 25),
         'random_state': 666
-    }
-
-
-# def lgb_params(trial):
-#     return {
-#         'learning_rate': trial.suggest_uniform('learning_rate', 0.0000001, 1),
-#         'n_estimators': trial.suggest_int("n_estimators", 1, 800),
-#         'max_depth': trial.suggest_int("max_depth", 2, 25),
-#         'num_leaves': trial.suggest_int("num_leaves", 2, 3000),
-#         'min_child_samples': trial.suggest_int('min_child_samples', 3, 200),
-#         'random_state': 666
-#     }
-
-params = {
-    'LGB': {
-        ('learning_rate', 0.0000001, 1),
-        ('n_estimators', 1, 800),
-        ('max_depth', 2, 25),
-        ('num_leaves', 2, 3000),
-        ('min_child_samples', 3, 200)
+    },
+    'et': {
+        'min_samples_leaf': ('int', 1, 15),
+        'min_samples_split': ('uniform', 0.05, 1.0),
+        'max_depth': ('int', 2, 25),
+        'random_state': 666
+    },
+    'bagg': {
+        'n_estimators': ('int', 2, 300),
+        'max_samples': ('int', 1, 400),
+        'random_state': 666
+    },
+    'kn': {
+        'n_neighbors': ('int', 2, 100)
+    },
+    'ada': {
+        'n_estimators': ('int', 2, 800),
+        'learning_rate': ('uniform', 0.0001, 1.0)
+    },
+    'svm': {
+        'kernel': ('categorical', ['linear', 'poly']),
+        'tol': ('uniform', 1e-5, 1),
+        'C': ('loguniform', 1e-10, 1e10)
+    },
+    'cb': {
+        'learning_rate': ('uniform', 0.0001, 1.0),
+        'depth': ('int', 2, 16)
     }
 }
-
-
-def dt_params(trial):
-    return {
-        'max_depth': trial.suggest_int("max_depth", 2, 25),
-        'min_samples_split': trial.suggest_int('min_samples_split', 2, 20),
-        'min_weight_fraction_leaf': trial.suggest_uniform('min_weight_fraction_leaf', 0.0, 0.5),
-        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 15),
-        'random_state': 666
-    }
-
-
-def et_params(trial):
-    return {
-        'min_samples_leaf': trial.suggest_int("min_samples_leaf", 1, 15),
-        'min_samples_split': trial.suggest_uniform("min_samples_split", 0.05, 1.0),
-        'max_depth': trial.suggest_int("max_depth", 2, 25),
-        'random_state': 666
-    }
-
-
-def bagg_params(trial):
-    return {
-        'n_estimators': trial.suggest_int('n_estimators', 2, 300),
-        'max_samples': trial.suggest_int('max_samples', 1, 400),
-        'random_state': 666
-    }
-
-
-def kn_params(trial):
-    return {
-        'n_neighbors': trial.suggest_int("n_neighbors", 2, 100)
-    }
-
-
-def ada_params(trial):
-    return {
-        'n_estimators': trial.suggest_int("n_estimators", 2, 800),
-        'learning_rate': trial.suggest_uniform('learning_rate', 0.0001, 1.0)
-    }
-
-
-def svm_params(trial):
-    return {
-        'kernel': trial.suggest_categorical('kernel', ['linear', 'poly']),
-        'tol': trial.suggest_uniform('tol', 1e-5, 1),
-        'C': trial.suggest_loguniform('C', 1e-10, 1e10)
-    }
-
-
-def cb_params(trial):
-    return {
-        'learning_rate': trial.suggest_uniform('learning_rate', 0.0001, 1.0),
-        'depth': trial.suggest_int("max_depth", 2, 16)
-    }
-
 
 models = {
 
     # Gradient Boosts
-    'XGBR': (XGBRegressor, xgboost_params),
-    'XGBC': (XGBClassifier, xgboost_params),
-    'LGBR': (LGBMRegressor, 'LGB'),
-    'LGBC': (LGBMClassifier, 'LGB'),
+    'xgbR': (XGBRegressor, 'xgb'),
+    'xgbC': (XGBClassifier, 'xgb'),
+    'lgbR': (LGBMRegressor, 'lgb'),
+    'lgbC': (LGBMClassifier, 'lgb'),
 
     # Trees
-    'RFR': (RandomForestRegressor, rf_params),
-    'RFC': (RandomForestClassifier, rf_params),
-    'DTR': (DecisionTreeRegressor, dt_params),
-    'DTC': (DecisionTreeClassifier, dt_params),
-    'ETR': (ExtraTreeRegressor, et_params),
-    'ETC': (ExtraTreeClassifier, et_params),
+    'rfR': (RandomForestRegressor, 'rf'),
+    'rfC': (RandomForestClassifier, 'rf'),
+    'dtR': (DecisionTreeRegressor, 'dt'),
+    'dtC': (DecisionTreeClassifier, 'dt'),
+    'etR': (ExtraTreeRegressor, 'et'),
+    'etC': (ExtraTreeClassifier, 'et'),
 
     # Ensemble
-    'BC': (BaggingClassifier, bagg_params),
-    'BR': (BaggingRegressor, bagg_params),
-    'ADAR': (AdaBoostRegressor, ada_params),
-    'ADAC': (AdaBoostClassifier, ada_params),
-    'CBR': (CatBoostRegressor, cb_params),
-    'CBC': (CatBoostClassifier, cb_params),
+    'baggC': (BaggingClassifier, 'bagg'),
+    'baggR': (BaggingRegressor, 'bagg'),
+    'adaR': (AdaBoostRegressor, 'ada'),
+    'adaC': (AdaBoostClassifier, 'ada'),
+    'cbR': (CatBoostRegressor, 'cb'),
+    'cbC': (CatBoostClassifier, 'cb'),
 
     # KNeighbors
-    'KNC': (KNeighborsClassifier, kn_params),
-    'KNR': (KNeighborsRegressor, kn_params),
+    'knC': (KNeighborsClassifier, 'kn'),
+    'knR': (KNeighborsRegressor, 'kn'),
 
     # SVM
-    'SVR': (SVR, svm_params),
-    'SVC': (SVC, svm_params),
+    'svR': (SVR, 'svm'),
+    'svC': (SVC, 'svm'),
 }
 
-def get_model(model_name, trial, custom_params_fn=None):
+
+def get_model(model_name, trial, custom_params={}):
     model, family = models[model_name]
-    default_params = params[family]
-    custom_params = custom_params_fn(trial) if custom_params_fn is not None else {}
-    custom_params.update(params)
-    { for col, *co}
+    default_params = family_params[family]
+    custom_params.update(default_params)
+    params = {col: values[0] if len(values) == 1 else getattr(trial, f'suggest_{values[0]}')(col, *values[1:])
+              for col, values in custom_params.items()}
+    return model(**params)
 
 
 class EarlyStoppingError(Exception):
@@ -192,8 +155,7 @@ class EarlyStopping:
 def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
              direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
              feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=False,
-             custom_params_fn=None):
-
+             custom_params={}):
     if sample_size is not None:
         ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_column] if stratify else None)
 
@@ -204,7 +166,7 @@ def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=66
     stopping = EarlyStopping(direction, patience, threshold)
 
     def objective(trial):
-        model = get_model(model_name, trial, custom_params_fn)
+        model = get_model(model_name, trial, custom_params)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
         error = get_score_fn(scorer)(y_val, preds)

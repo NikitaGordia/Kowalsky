@@ -2,7 +2,7 @@
 
 A simple package for handful ML things and more.
 
-## What's new? [v0.0.36]
+## What's new? [v0.0.37]
 * add ```feature``` package with two types of analysis + support для остальных функций
    * Recursive Feature Elimination
    * Sequential Feature Selection
@@ -67,40 +67,40 @@ optimize('RFR',
 ## Avaliable models:
 #### Gradient Boosts
 ```
-    'XGBR': XGBRegressor
-    'XGBC': XGBClassifier
-    'LGBR': LGBMRegressor
-    'LGBC': LGBMClassifier
+    'xgbR': XGBRegressor
+    'xgbC': XGBClassifier
+    'lgbR': LGBMRegressor
+    'lgbC': LGBMClassifier
 ```
 
 #### Trees
 ```
-    'RFR': RandomForestRegressor
-    'RFC': RandomForestClassifier
-    'DTR': DecisionTreeRegressor
-    'DTC': DecisionTreeClassifier
-    'ETR': ExtraTreeRegressor
-    'ETC': ExtraTreeClassifier
+    'rfR': RandomForestRegressor
+    'rfC': RandomForestClassifier
+    'dtR': DecisionTreeRegressor
+    'dtC': DecisionTreeClassifier
+    'etR': ExtraTreeRegressor
+    'etC': ExtraTreeClassifier
 ```
 
 #### Ensemble
 ```
-    'BC': BaggingClassifier
-    'BR': BaggingRegressor
-    'ADAR': AdaBoostRegressor
-    'ADAC': AdaBoostClassifier
-    'CBR': CatBoostRegressor
-    'CBC': CatBoostClassifier
+    'baggC': BaggingClassifier
+    'baggR': BaggingRegressor
+    'adaR': AdaBoostRegressor
+    'adaC': AdaBoostClassifier
+    'cbR': CatBoostRegressor
+    'cbC': CatBoostClassifier
 ```
 
 #### KNeighbors
 ```
-    'KNC': KNeighborsClassifier
-    'KNR': KNeighborsRegressor
+    'knC': KNeighborsClassifier
+    'knR': KNeighborsRegressor
 ```
 
 #### SVM
 ```
-    'SVR': SVR
-    'SVC': SVC
+    'svR': SVR
+    'svC': SVC
 ```
