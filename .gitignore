@@ -4,3 +4,5 @@ NikitaGordia.egg-info
 .idea
 tests
 __pycache__
+kowalsky/logs
+kowalsky/__pycache__

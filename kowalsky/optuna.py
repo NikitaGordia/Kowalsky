@@ -48,15 +48,25 @@ def xgboost_params(trial):
     }
 
 
-def lgb_params(trial):
-    return {
-        'learning_rate': trial.suggest_uniform('learning_rate', 0.0000001, 1),
-        'n_estimators': trial.suggest_int("n_estimators", 1, 800),
-        'max_depth': trial.suggest_int("max_depth", 2, 25),
-        'num_leaves': trial.suggest_int("num_leaves", 2, 3000),
-        'min_child_samples': trial.suggest_int('min_child_samples', 3, 200),
-        'random_state': 666
+# def lgb_params(trial):
+#     return {
+#         'learning_rate': trial.suggest_uniform('learning_rate', 0.0000001, 1),
+#         'n_estimators': trial.suggest_int("n_estimators", 1, 800),
+#         'max_depth': trial.suggest_int("max_depth", 2, 25),
+#         'num_leaves': trial.suggest_int("num_leaves", 2, 3000),
+#         'min_child_samples': trial.suggest_int('min_child_samples', 3, 200),
+#         'random_state': 666
+#     }
+
+params = {
+    'LGB': {
+        ('learning_rate', 0.0000001, 1),
+        ('n_estimators', 1, 800),
+        ('max_depth', 2, 25),
+        ('num_leaves', 2, 3000),
+        ('min_child_samples', 3, 200)
     }
+}
 
 
 def dt_params(trial):
@@ -117,35 +127,42 @@ def cb_params(trial):
 models = {
 
     # Gradient Boosts
-    'XGBR': lambda trial: XGBRegressor(**xgboost_params(trial)),
-    'XGBC': lambda trial: XGBClassifier(**xgboost_params(trial)),
-    'LGBR': lambda trial: LGBMRegressor(**lgb_params(trial)),
-    'LGBC': lambda trial: LGBMClassifier(**lgb_params(trial)),
+    'XGBR': (XGBRegressor, xgboost_params),
+    'XGBC': (XGBClassifier, xgboost_params),
+    'LGBR': (LGBMRegressor, 'LGB'),
+    'LGBC': (LGBMClassifier, 'LGB'),
 
     # Trees
-    'RFR': lambda trial: RandomForestRegressor(**rf_params(trial)),
-    'RFC': lambda trial: RandomForestClassifier(**rf_params(trial)),
-    'DTR': lambda trial: DecisionTreeRegressor(**dt_params(trial)),
-    'DTC': lambda trial: DecisionTreeClassifier(**dt_params(trial)),
-    'ETR': lambda trial: ExtraTreeRegressor(**et_params(trial)),
-    'ETC': lambda trial: ExtraTreeClassifier(**et_params(trial)),
+    'RFR': (RandomForestRegressor, rf_params),
+    'RFC': (RandomForestClassifier, rf_params),
+    'DTR': (DecisionTreeRegressor, dt_params),
+    'DTC': (DecisionTreeClassifier, dt_params),
+    'ETR': (ExtraTreeRegressor, et_params),
+    'ETC': (ExtraTreeClassifier, et_params),
 
     # Ensemble
-    'BC': lambda trial: BaggingClassifier(**bagg_params(trial)),
-    'BR': lambda trial: BaggingRegressor(**bagg_params(trial)),
-    'ADAR': lambda trial: AdaBoostRegressor(**ada_params(trial)),
-    'ADAC': lambda trial: AdaBoostClassifier(**ada_params(trial)),
-    'CBR': lambda trial: CatBoostRegressor(**cb_params(trial)),
-    'CBC': lambda trial: CatBoostClassifier(**cb_params(trial)),
+    'BC': (BaggingClassifier, bagg_params),
+    'BR': (BaggingRegressor, bagg_params),
+    'ADAR': (AdaBoostRegressor, ada_params),
+    'ADAC': (AdaBoostClassifier, ada_params),
+    'CBR': (CatBoostRegressor, cb_params),
+    'CBC': (CatBoostClassifier, cb_params),
 
     # KNeighbors
-    'KNC': lambda trial: KNeighborsClassifier(**kn_params(trial)),
-    'KNR': lambda trial: KNeighborsRegressor(**kn_params(trial)),
+    'KNC': (KNeighborsClassifier, kn_params),
+    'KNR': (KNeighborsRegressor, kn_params),
 
     # SVM
-    'SVR': lambda trial: SVR(**svm_params(trial)),
-    'SVC': lambda trial: SVC(**svm_params(trial)),
+    'SVR': (SVR, svm_params),
+    'SVC': (SVC, svm_params),
 }
+
+def get_model(model_name, trial, custom_params_fn=None):
+    model, family = models[model_name]
+    default_params = params[family]
+    custom_params = custom_params_fn(trial) if custom_params_fn is not None else {}
+    custom_params.update(params)
+    { for col, *co}
 
 
 class EarlyStoppingError(Exception):
@@ -174,10 +191,11 @@ class EarlyStopping:
 
 def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
              direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
-             feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=False):
+             feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=False,
+             custom_params_fn=None):
 
     if sample_size is not None:
-        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_label] if stratify else None)
+        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_column] if stratify else None)
 
     X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
@@ -186,7 +204,7 @@ def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=66
     stopping = EarlyStopping(direction, patience, threshold)
 
     def objective(trial):
-        model = models[model_name](trial)
+        model = get_model(model_name, trial, custom_params_fn)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
         error = get_score_fn(scorer)(y_val, preds)
@@ -204,60 +222,4 @@ def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=66
         print("Stopped with early stopping")
     live.clear()
 
-    return study.best_params
-
-
-
-def create_super_learner(trial, models, head_models):
-    selected_model_names = []
-    n_models = trial.suggest_int('n_models', 1, min(6, len(models)))
-    names = list(models.keys())
-    for i in range(n_models):
-        model_item = trial.suggest_categorical('model_{}'.format(i), names)
-        if model_item not in selected_model_names:
-            selected_model_names.append(model_item)
-
-    folds = trial.suggest_int('folds', 2, 6)
-    model = SuperLearner(folds=folds)
-
-    selected_models = [models[item] for item in selected_model_names]
-    model.add(selected_models)
-
-    head_names = list(head_models.keys())
-    head = trial.suggest_categorical('head', head_names)
-    model.add_meta(head_models[head])
-    print(f"Try: {selected_model_names}, {head}")
-    return model
-
-
-def optimize_super_learner(models, head_models, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
-                           direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
-                           feature_selection_cols=None, ds=None, path=None):
-
-    X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
-    X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
-    scorer_fn = get_score_fn(scorer)
-
-    live = LivePyPlot(direction)
-    stopping = EarlyStopping(direction, patience, threshold)
-
-    def objective(trial):
-        model = create_super_learner(trial, models, head_models)
-        model.fit(X_train, y_train)
-        preds = model.predict(X_val)
-        error = scorer_fn(y_val, preds)
-        live(error)
-        stopping(error)
-        return error
-
-    study = optuna.create_study(direction=direction, sampler=sampler)
-
-    try:
-        study.optimize(objective, n_trials=trials, n_jobs=-1)
-    except KeyboardInterrupt:
-        print("Stopped with keyboard")
-    except EarlyStoppingError:
-        print("Stopped with early stopping")
-    live.clear()
-
-    return study.best_params
+    return live.best, study.best_params
