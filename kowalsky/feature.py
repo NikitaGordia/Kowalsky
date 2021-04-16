@@ -6,12 +6,25 @@ from kowalsky.logs.utils import LivePyPlot
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 import matplotlib.pyplot as plt
+from sklearn.metrics import get_scorer
 import numpy as np
 import math
 
 
+def calc_score(model, X, y, type='cv', scoring=None, cv=5):
+    if type == 'cv':
+        return abs(cross_val_score(model, X, y, scoring=scoring, cv=cv, n_jobs=-1, verbose=10).mean())
+    elif type == 'test':
+        X_train, X_test, y_train, y_test = train_test_split(X, y)
+        model.fit(X_train, y_train)
+        preds = model.predict(X_test)
+        return abs(get_scorer(scoring)._score_func(y_test, preds))
+    else:
+        raise Exception(f'Wrong type: {type} (use cv/test)')
+
+
 def rfe_analysis(model, y_column, scoring, direction, cv=3, ranking=None, path=None, ds=None,
-                 sample_size=None, n_features_to_select=5, precision=1e-3, stratify=False):
+                 sample_size=None, n_features_to_select=5, precision=1e-3, stratify=False, eval_type='cv'):
     if ds is None:
         ds = pd.read_csv(path)
 
@@ -44,7 +57,7 @@ def rfe_analysis(model, y_column, scoring, direction, cv=3, ranking=None, path=N
     try:
         for rank in range(1, np.max(ranking) + 1):
             rank_columns = X.columns[ranking <= rank]
-            score = abs(cross_val_score(model, X[rank_columns], y, scoring=scoring, cv=cv, n_jobs=-1, verbose=10).mean())
+            score = calc_score(model, X[rank_columns], y, type=eval_type, cv=cv, scoring=scoring)
             live(score, sum(ranking <= rank))
 
             is_better_score = score > best_score + precision if direction == 'maximize' else score < best_score - precision
@@ -56,12 +69,11 @@ def rfe_analysis(model, y_column, scoring, direction, cv=3, ranking=None, path=N
 
     live.clear()
 
-    return best_columns
+    return best_columns, ranking
 
 
 def sfs_analysis(model, y_label, scoring, k_features, cv=3, forward=True, floating=False, path=None,
                  sample_size=None, stratify=False, ds=None):
-
     if ds is None:
         ds = pd.read_csv(path)
 

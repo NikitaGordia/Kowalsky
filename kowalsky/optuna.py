@@ -17,12 +17,11 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import KNeighborsRegressor
-from mlens.ensemble import SuperLearner
 from sklearn.svm import SVR
 from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from catboost import CatBoostRegressor
-from .metrics import get_score_fn
+from sklearn.metrics import get_scorer
 from kowalsky.logs.utils import LivePyPlot
 import math
 from .df import read_dataset
@@ -154,12 +153,12 @@ class EarlyStopping:
 
 def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
              direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
-             feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=False,
-             custom_params={}):
-    if sample_size is not None:
-        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_column] if stratify else None)
+             feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=True,
+             custom_params={}, ignore=[]):
 
-    X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
+    X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols, ignore,
+                              sample_size, stratify)
+
     X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
 
     live = LivePyPlot(direction)
@@ -169,7 +168,7 @@ def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=66
         model = get_model(model_name, trial, custom_params)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        error = get_score_fn(scorer)(y_val, preds)
+        error = get_scorer(scorer)._score_func(y_val, preds)
         live(error)
         stopping(error)
         return error

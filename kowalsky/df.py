@@ -3,30 +3,48 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import missingno as msno
 from kowalsky.logs.utils import calc_percent
+from sklearn.model_selection import train_test_split
 
 
 def corr(ds, y_col):
     return abs(ds.corr()[y_col]).sort_values()
 
 
-def handle_outliers(df_raw, columns, drop=False, upper_quantile=.95,
+def handle_outliers(df_raw, columns, drop=True, upper_quantile=.95,
                     lower_quantile=.05, verbose=False):
     df = df_raw.copy()
 
-    for ix, column in enumerate(columns):
-        if column not in df: continue
+    out_cols = []
+    for ix, col_value in enumerate(columns):
+        col_in_df = isinstance(col_value, str)
 
-        upper_lim = df[column].quantile(upper_quantile)
-        lower_lim = df[column].quantile(lower_quantile)
+        if col_in_df:
+            if col_value not in df: continue
+            column = df[col_value]
+        else:
+            column = col_value
+
+        upper_lim = column.quantile(upper_quantile)
+        lower_lim = column.quantile(lower_quantile)
 
         if not drop:
-            df.loc[(df[column] > upper_lim), column] = upper_lim
-            df.loc[(df[column] < lower_lim), column] = lower_lim
+            if col_in_df:
+                df.loc[(column > upper_lim), col_value] = upper_lim
+                df.loc[(column < lower_lim), col_value] = lower_lim
+            else:
+                out_col = column.copy()
+                out_col[column > upper_lim] = upper_lim
+                out_col[column < lower_lim] = lower_lim
+                out_cols.append(out_col)
         else:
-            df = df.loc[(df[column] < upper_lim) & (df[column] > lower_lim)]
+            ix = (column < upper_lim) & (column > lower_lim)
+            df = df[ix]
+            if not col_in_df:
+                out_col = column.copy()
+                out_cols.append(out_col[ix])
 
         if verbose: print(f"Completed: {column}, {calc_percent(ix + 1, len(columns))}")
-    return df
+    return df, out_cols
 
 
 def transform(df_raw, columns, fn=np.log1p, verbose=False):
@@ -97,11 +115,15 @@ def describe_missing_values(df):
     msno.heatmap(df)
 
 
-def read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols):
+def read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols,
+                 ignore=[], sample_size=None, stratify=True):
     if ds is None:
         ds = pd.read_csv(path)
 
-    X, y = ds.drop(y_column, axis=1), ds[y_column]
+    if sample_size is not None:
+        ds, _ = train_test_split(ds, train_size=sample_size, stratify=ds[y_column] if stratify else None)
+
+    X, y = ds.drop([y_column] + ignore, axis=1), ds[y_column]
 
     if feature_selection_support is None and feature_selection_cols is None:
         feature_selection_cols = X.columns

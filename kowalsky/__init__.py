@@ -13,9 +13,10 @@ def analysis(model, y_column, eval_method='cv', path=None, path_test=None, path_
              rounds=1, eval_model=True, target_transform_fn=None, scorer=None,
              export_model_path=None, export_model=False, verbose=False, cv=5,
              feature_selection_support=None, feature_selection_cols=None, train_model=True,
-             test_size=0.25):
+             test_size=0.25, ignore=[], sample_size=None, stratify=True):
 
-    X, y = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols)
+    X, y = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols,
+                        ignore, sample_size, stratify)
 
     if eval_model:
         if verbose: print("Evaluation...")

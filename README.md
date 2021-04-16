@@ -10,7 +10,7 @@ A simple package for handful ML things and more.
    * ```EarlyStopping``` mechanism
    * optimization graph
    * multitasks with ```n_jobs=-1```
-* add ```logs``` package    
+* add ```logs``` package
 
 ## What's inside?
 
@@ -31,9 +31,9 @@ A simple package for handful ML things and more.
 3. kaggle:
     * ```submit``` - make submit-file for kaggle based on sample
     
-4. metrics:
-    *  ```rmse``` - RMSE scorer
-    *  ```rmsle``` - RMSLE scorer
+4. logs:
+    *  ```profile_memory``` - logs all heavy variables
+    *  ```make_pretty_pyplot``` - makes pyplot look better :)
     
 5. optuna - handful methods for working with optuna:
     * ```optimize``` - optimize model with given dataframe
@@ -49,9 +49,10 @@ A simple package for handful ML things and more.
     *  ```rfe_analysis``` - Recursive Feature Elimination analysis
     *  ```sfs_analysis``` - Sequential Feature Selection analysis
     
-8. logs:
-    *  ```profile_memory``` - logs all heavy variables
-    *  ```make_pretty_pyplot``` - makes pyplot look better :)
+## What's next?
+
+- [ ] Use ```optuna``` for searching the best feature amount
+- [ ] Add file logger to track the progress in ```JupterLab```
    
 ## Example:
 ```
