@@ -154,7 +154,7 @@ class EarlyStopping:
 def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=666),
              direction='maximize', patience=100, threshold=1e-3, feature_selection_support=None,
              feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=True,
-             custom_params={}, ignore=[]):
+             custom_params={}, ignore=[], n_jobs=-1):
 
     X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols, ignore,
                               sample_size, stratify)
@@ -176,7 +176,7 @@ def optimize(model_name, scorer, y_column, trials=30, sampler=TPESampler(seed=66
     study = optuna.create_study(direction=direction, sampler=sampler)
 
     try:
-        study.optimize(objective, n_trials=trials, n_jobs=-1)
+        study.optimize(objective, n_trials=trials, n_jobs=n_jobs)
     except KeyboardInterrupt:
         print("Stopped with keyboard")
     except EarlyStoppingError:
