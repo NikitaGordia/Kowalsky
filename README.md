@@ -2,7 +2,7 @@
 
 A simple package for handful ML things and more.
 
-## What's new? [v0.0.38]
+## What's new? [v0.0.39]
 * add ```feature``` package with two types of analysis + support для остальных функций
    * Recursive Feature Elimination
    * Sequential Feature Selection

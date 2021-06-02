@@ -11,7 +11,7 @@ def corr(ds, y_col):
 
 
 def handle_outliers(df_raw, columns, drop=True, upper_quantile=.95,
-                    lower_quantile=.05, verbose=False):
+                    lower_quantile=.05):
     df = df_raw.copy()
 
     out_cols = []
@@ -43,17 +43,14 @@ def handle_outliers(df_raw, columns, drop=True, upper_quantile=.95,
                 out_col = column.copy()
                 out_cols.append(out_col[ix])
 
-        if verbose: print(f"Completed: {column}, {calc_percent(ix + 1, len(columns))}")
     return df, out_cols
 
 
-def transform(df_raw, columns, fn=np.log1p, verbose=False):
+def transform(df_raw, columns, fn=np.log1p):
     df = df_raw.copy()
     for ix, column in enumerate(columns):
         if column in df:
             df[column] = df[column].transform(fn)
-
-        if verbose: print(f"Completed: {column}, {calc_percent(ix + 1, len(columns))}")
 
     return df
 

@@ -46,7 +46,7 @@ class LivePyPlot:
         self.y.append(self.best if not self.show_true_value else new_point)
         self.x.append(x if x is not None else len(self.y))
 
-        plt.title(f"Best: {self.best:.3f}")
+        plt.title(f"Best: {self.best:.6f}")
         plt.plot(self.x, self.y, color='red')
 
         display.clear_output(wait=True)
