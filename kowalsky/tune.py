@@ -1,5 +1,3 @@
-import math
-
 import optuna
 from lightgbm import LGBMRegressor
 from lightgbm import LGBMClassifier
@@ -154,15 +152,6 @@ models = {
     'svR': (SVR, 'svm'),
     'svC': (SVC, 'svm'),
 }
-
-
-def get_model(model_name, trial, custom_params={}):
-    model, family = models[model_name]
-    default_params = family_params[family]
-    custom_params.update(default_params)
-    params = {col: values[0] if len(values) == 1 else getattr(trial, f'suggest_{values[0]}')(col, *values[1:])
-              for col, values in custom_params.items()}
-    return model(**params)
 
 
 def get_meta_info(model_init, scorer, X_train, y_train, X_val, y_val, callbacks=()):
