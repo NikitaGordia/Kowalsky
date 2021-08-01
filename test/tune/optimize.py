@@ -49,7 +49,8 @@ def test_optuna():
 def test_optimize():
     X, y = load_diabetes(return_X_y=True, as_frame=True)
     X['label'] = y
-    optimize('dtR', 'neg_mean_squared_error', 'label', ds=X, tuner='optuna', show_live=False, trials=150, logging='local')
+    res = optimize('dtR', 'neg_mean_squared_error', 'label', ds=X, tuner='optuna', show_live=False, trials=50, logging='local')
+    print(res)
 
 if __name__ == '__main__':
     test_optimize()

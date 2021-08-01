@@ -5,3 +5,6 @@ NikitaGordia.egg-info
 tests
 __pycache__
 kowalsky/__pycache__
+test/tune/logs
+test/opt/logs
+test/logs/logs

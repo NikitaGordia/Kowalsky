@@ -21,13 +21,15 @@ from sklearn.svm import SVR
 from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from catboost import CatBoostRegressor
-from sklearn.metrics import get_scorer
+from sklearn.metrics import get_scorer as get_sklearn_scorer
 from kowalsky.logs.utils import LivePyPlot
 from .logs.loggers import get_logger
 from .model import EarlyStopping
 from .model import EarlyStoppingError
 import numpy as np
 from .df import read_dataset
+from .metrics import neg_rmse
+from sklearn.metrics import get_scorer
 
 family_params = {
     'hgb': {
@@ -154,12 +156,12 @@ models = {
 }
 
 
-def get_meta_info(model_init, scorer, X_train, y_train, X_val, y_val, callbacks=()):
+def get_objective(model_init, scorer, X_train, y_train, X_val, y_val, callbacks=()):
     def objective(params):
         model = model_init(**params)
         model.fit(X_train, y_train)
         preds = model.predict(X_val)
-        error = get_scorer(scorer)._score_func(y_val, preds)
+        error = scorer(y_val, preds)
         for callback in callbacks:
             callback(error, params)
         return error
@@ -167,14 +169,27 @@ def get_meta_info(model_init, scorer, X_train, y_train, X_val, y_val, callbacks=
     return objective
 
 
+def get_scorer(scorer_in):
+    if callable(scorer_in):
+        return scorer_in
+    elif scorer_in == 'neg_rmse':
+        return neg_rmse
+    else:
+        return get_sklearn_scorer(scorer_in)._score_func
+
+
+
 def optimize(model_name, scorer, y_column, trials=30, tuner='optuna', feature_selection_support=None,
              feature_selection_cols=None, ds=None, path=None, sample_size=None, stratify=True,
              custom_params={}, ignore=[], n_jobs=-1, logging=None, logging_params={},
-             early_stopping=False, patience=100, threshold=1e-3, show_live=True):
-    X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols, ignore,
-                              sample_size, stratify)
+             early_stopping=False, patience=100, threshold=1e-3, show_live=True, X_y_train_val=None):
+    if X_y_train_val is None:
+        X_ds, y_ds = read_dataset(ds, path, y_column, feature_selection_support, feature_selection_cols, ignore,
+                                  sample_size, stratify)
 
-    X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
+        X_train, X_val, y_train, y_val = train_test_split(X_ds, y_ds)
+    else:
+        X_train, X_val, y_train, y_val = X_y_train_val
 
     model_init, family = models[model_name]
     custom_params.update(family_params[family])
@@ -188,9 +203,11 @@ def optimize(model_name, scorer, y_column, trials=30, tuner='optuna', feature_se
     if early_stopping:
         stopping = EarlyStopping('maximize', patience, threshold)
         callbacks.append(lambda error, params: stopping(error))
+    scorer = get_scorer(scorer)
 
-    tuner = get_tuner(tuner, get_meta_info(model_init, scorer, X_train, y_train, X_val, y_val, callbacks),
+    tuner = get_tuner(tuner, get_objective(model_init, scorer, X_train, y_train, X_val, y_val, callbacks),
                       custom_params)
+
     try:
         tuner.tune(trials, n_jobs)
     except KeyboardInterrupt:
@@ -227,6 +244,11 @@ class OptunaTuner(Tuner):
         self.study = optuna.create_study(direction='maximize', sampler=sampler)
         optuna.logging.set_verbosity(optuna.logging.ERROR)
 
+    def _save_result(self):
+        print(self.study.best_params, self.study.best_value)
+        self.best_params = self.study.best_params
+        self.best_score = self.study.best_value
+
     def tune(self, trials, n_jobs=-1):
         def optuna_objective(trial):
             params = {col: values[0] if len(values) == 1 else getattr(trial, f'suggest_{values[0]}')(col, *values[1:])
@@ -234,9 +256,12 @@ class OptunaTuner(Tuner):
             error = self.objective(params)
             return error
 
-        self.study.optimize(optuna_objective, n_trials=trials, n_jobs=n_jobs)
-        self.best_params = self.study.best_params
-        self.best_score = self.study.best_value
+        try:
+            self.study.optimize(optuna_objective, n_trials=trials, n_jobs=n_jobs)
+        except:
+            self._save_result()
+            raise
+        self._save_result()
 
 
 class RandomSearchTuner(Tuner):
